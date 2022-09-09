@@ -2585,22 +2585,29 @@ class TestBufferProtocol(unittest.TestCase):
                 dsize = struct.calcsize(dformat)
                 ex = ndarray(list(range(32)), shape=[32//ssize], format=sformat)
                 msrc = memoryview(ex)
-                if dfmt == sfmt:
+                if dfmt.lower() == sfmt.lower():
                     msrc.cast(dfmt, [32//dsize])
                 else:
                     self.assertRaises(TypeError, msrc.cast, dfmt, [32//dsize])
 
         for sfmt, sitems, _ in iter_format(1):
+            if not is_memoryview_format(sfmt):
+                continue
             ex = ndarray(sitems, shape=[1], format=sfmt)
             msrc = memoryview(ex)
+            ssize = struct.calcsize(sformat)
             for dfmt, _, _ in iter_format(1):
+                dsize = struct.calcsize(dformat)
                 if not is_memoryview_format(dfmt):
                     self.assertRaises(ValueError, msrc.cast, dfmt,
-                                      [32//dsize])
-                else:
-                    if not is_byte_format(sfmt) and not is_byte_format(dfmt):
+                                      [ssize//dsize])
+                elif dsize <= ssize:
+                    # print("!!", dfmt, sfmt)
+                    if dfmt.lower() == sfmt.lower():
+                        msrc.cast(dfmt, [ssize//dsize])
+                    elif not is_byte_format(sfmt) and not is_byte_format(dfmt):
                         self.assertRaises(TypeError, msrc.cast, dfmt,
-                                          [32//dsize])
+                                          [ssize//dsize])
 
         # invalid shape
         size_h = struct.calcsize('h')

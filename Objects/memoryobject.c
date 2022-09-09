@@ -1147,6 +1147,28 @@ get_native_fmtchar(char *result, const char *fmt)
     return -1;
 }
 
+static inline int8_t
+fmtchar_as_cast_num(const char *fmt)
+{
+    uint8_t fmt_index = -1;
+    if (fmt[0] == '@') fmt++;
+
+    switch (fmt[0]) {
+    case 'c': case 'b': case 'B': fmt_index = 1; break;
+    case 'h': case 'H': fmt_index = 2; break;
+    case 'i': case 'I': fmt_index = 3; break;
+    case 'l': case 'L': fmt_index = 4; break;
+    case 'q': case 'Q': fmt_index = 5; break;
+    case 'n': case 'N': fmt_index = 6; break;
+    case 'f': fmt_index = 7; break;
+    case 'd': fmt_index = 8; break;
+    case '?': fmt_index = 9; break;
+    case 'P': fmt_index = 10; break;
+    }
+
+    return fmt_index;
+}
+
 static inline const char *
 get_native_fmtstr(const char *fmt)
 {
@@ -1195,7 +1217,7 @@ cast_to_1D(PyMemoryViewObject *mv, PyObject *format)
 {
     Py_buffer *view = &mv->view;
     PyObject *asciifmt;
-    char srcchar, destchar;
+    char destchar;
     Py_ssize_t itemsize;
     int ret = -1;
 
@@ -1217,8 +1239,10 @@ cast_to_1D(PyMemoryViewObject *mv, PyObject *format)
         goto out;
     }
 
-    if ((get_native_fmtchar(&srcchar, view->format) < 0 || !IS_BYTE_FORMAT(srcchar)) && (
-            !IS_BYTE_FORMAT(destchar) && destchar != srcchar)) {
+    int8_t si = fmtchar_as_cast_num(view->format);
+    int8_t di = fmtchar_as_cast_num(&destchar);
+
+    if (si != di && !(si == 1 || si == -1) && di != 1) {
         PyErr_SetString(PyExc_TypeError,
             "memoryview: cannot cast between two different non-byte formats");
         goto out;
