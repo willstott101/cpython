@@ -2585,7 +2585,10 @@ class TestBufferProtocol(unittest.TestCase):
                 dsize = struct.calcsize(dformat)
                 ex = ndarray(list(range(32)), shape=[32//ssize], format=sformat)
                 msrc = memoryview(ex)
-                self.assertRaises(TypeError, msrc.cast, dfmt, [32//dsize])
+                if dfmt == sfmt:
+                    msrc.cast(dfmt, [32//dsize])
+                else:
+                    self.assertRaises(TypeError, msrc.cast, dfmt, [32//dsize])
 
         for sfmt, sitems, _ in iter_format(1):
             ex = ndarray(sitems, shape=[1], format=sfmt)

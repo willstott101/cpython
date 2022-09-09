@@ -1217,10 +1217,10 @@ cast_to_1D(PyMemoryViewObject *mv, PyObject *format)
         goto out;
     }
 
-    if ((get_native_fmtchar(&srcchar, view->format) < 0 ||
-         !IS_BYTE_FORMAT(srcchar)) && !IS_BYTE_FORMAT(destchar)) {
+    if ((get_native_fmtchar(&srcchar, view->format) < 0 || !IS_BYTE_FORMAT(srcchar)) && (
+            !IS_BYTE_FORMAT(destchar) && destchar != srcchar)) {
         PyErr_SetString(PyExc_TypeError,
-            "memoryview: cannot cast between two non-byte formats");
+            "memoryview: cannot cast between two different non-byte formats");
         goto out;
     }
     if (view->len % itemsize) {
